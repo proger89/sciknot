@@ -1,0 +1,11 @@
+canonical,aliases,description
+уровень напряжений,"НДС; напряжения; stress level",Stress intensity status
+плотность наблюдений,"coverage; плотность мониторинга; мониторинг",Monitoring density
+качество модели,"валидация модели; валидац; model quality",Model validation status
+риск деформаций,"деформации; деформац; deformation risk",Deformation risk status
+вероятность концентрации напряжений,"концентрация напряжений; концентрации напряжений; stress concentration",Forecasted stress concentration likelihood
+фактические замеры,"замеры; замер; measurements",Direct measurement availability
+верификация прогноза,"validation; проверка прогноза; валидац",Forecast validation availability
+терминологическая согласованность,"термины; terminology",Terminology alignment
+приоритет мониторинга,"monitoring priority; приоритет",Monitoring priority
+актуальность методик,"актуальность; recent methods",Method recency

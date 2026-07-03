@@ -1,0 +1,6 @@
+canonical,aliases,description
+Комсомольский рудный массив,"Комсомольский; Комсомольского; комсомольск; НДС Комсомольский; НДС Комсомольского; массив Комсомольского рудника",Primary demo object for stress-strain monitoring
+горный массив,"массив; породный массив; геомеханический массив",Generic rock mass object
+рудоспуск,"рудоспуски; orepass",Orepass object in geomechanical evaluation
+рудник 2025,"рудник; mine planning",Mine planning context
+горная геомеханика,"геомеханика; mining geomechanics",Domain context

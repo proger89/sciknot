@@ -1,0 +1,21 @@
+.env
+.agents/
+.codex/
+.supergoal/
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.streamlit/secrets.toml
+data/processed/
+artifacts/
+demo/screenshots/
+submission/
+Источники информации/
+*.zip
+*.mp4
+*.pptx
+*.pdf
+*.log

@@ -1,0 +1,16 @@
+[
+  {
+    "model_uri": "gpt://{YANDEX_FOLDER_ID}/yandexgpt-5.1",
+    "status": "pass",
+    "case_count": 3,
+    "latency_ms": 1780,
+    "detail": "http_status=200"
+  },
+  {
+    "model_uri": "gpt://{YANDEX_FOLDER_ID}/qwen3-235b-a22b-fp8",
+    "status": "blocked",
+    "case_count": 3,
+    "latency_ms": 1044,
+    "detail": "http_status=400"
+  }
+]

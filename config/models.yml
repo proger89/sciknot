@@ -1,0 +1,16 @@
+default_generator: "gpt://{YANDEX_FOLDER_ID}/yandexgpt-5.1"
+fallback_generator: "gpt://{YANDEX_FOLDER_ID}/qwen3-235b-a22b-fp8"
+fallback_generator_alt: "gpt://{YANDEX_FOLDER_ID}/qwen3.6-35b-a3b"
+doc_embedding: "emb://{YANDEX_FOLDER_ID}/text-embeddings-v2-doc/"
+query_embedding: "emb://{YANDEX_FOLDER_ID}/text-embeddings-v2-query/"
+optional_later:
+  - "gpt://{YANDEX_FOLDER_ID}/yandexgpt-5-pro"
+  - "gpt://{YANDEX_FOLDER_ID}/yandexgpt-5-lite"
+  - "gpt://{YANDEX_FOLDER_ID}/aliceai-llm"
+  - "gpt://{YANDEX_FOLDER_ID}/aliceai-llm-flash"
+  - "gpt://{YANDEX_FOLDER_ID}/deepseek-v4-flash"
+  - "gpt://{YANDEX_FOLDER_ID}/gpt-oss-120b"
+  - "gpt://{YANDEX_FOLDER_ID}/gpt-oss-20b"
+excluded:
+  deepseek-v32: "Official docs marked the URI valid only until 2026-06-28; current planning date is 2026-07-03."
+

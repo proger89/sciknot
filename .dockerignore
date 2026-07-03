@@ -1,0 +1,12 @@
+.env
+.pytest_cache/
+.ruff_cache/
+.supergoal/
+__pycache__/
+*.pyc
+*.zip
+artifacts/
+submission/
+demo/screenshots/
+data/processed/
+Источники информации/

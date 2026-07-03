@@ -1,0 +1,4 @@
+{"case_id":"json_quote","prompt":"Извлеки материал, процесс, свойство и короткую цитату из фрагмента: НДС Комсомольский","expected_fields":["material","process","property_name","quote"]}
+{"case_id":"no_hallucination","prompt":"Если в тексте нет фактического замера рудоспуска, верни null для value и объясни недостаток данных.","expected_fields":["value","data_insufficient","missing_data"]}
+{"case_id":"russian_terms","prompt":"Нормализуй термин НДС как напряженно-деформированное состояние и сохрани русскую терминологию.","expected_fields":["normalized_terms","quote"]}
+

@@ -1,0 +1,9 @@
+document_id,path,title,type,topic,locator,note,selected
+DOC001,Источники информации/Доклады/НДС Комсомольский.pdf,Отчет о геомеханическом мониторинге Комсомольского рудного массива,pdf,geomechanics,presentation title,Core demo source for stress-strain state at the Komsomolsky mine,true
+DOC002,Источники информации/Доклады/Презентация Измерение НДС Техсовет.pdf,Презентация Измерение НДС Техсовет,pdf,measurement,presentation title,Measurement source for stress-strain state monitoring,true
+DOC003,Источники информации/Доклады/Трофимов А.В. Опыт создания блочных геомеханических моделей в ГГИС.pdf,Опыт создания блочных геомеханических моделей в ГГИС,pdf,modeling,presentation title,Block geomechanical model source,true
+DOC004,"Источники информации/Доклады/Техсовет по геомеханике,презентация Кулагин А.Д. рудоспуски.pdf",Техсовет по геомеханике: рудоспуски,pdf,orepasses,presentation title,Orepass geomechanics source,true
+DOC005,Источники информации/Доклады/Прогнозирование_участков_концентрации_напряжений_в_массиве_горных.pptx,Прогнозирование участков концентрации напряжений,pptx,prediction,presentation title,Stress concentration prediction source,true
+DOC006,Источники информации/Доклады/Тяпкина ПА_Пермь_Зимняя школа.pdf,Геомеханика: зимняя школа,pdf,education,presentation title,Methods and terminology source,true
+DOC007,Источники информации/Доклады/Преза Рудник 2025.pptx,Рудник 2025,pptx,mine-planning,presentation title,Forward-looking mine operations source,true
+DOC008,Источники информации/Журналы/Горный журнал/2026/Гж 04_26.pdf,Горный журнал 04 2026,pdf,journal,journal issue,Recent mining journal background,true
