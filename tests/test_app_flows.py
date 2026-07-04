@@ -4,7 +4,15 @@ from sciknot.demo_questions import PREPARED_QUESTIONS
 
 
 def run_app() -> AppTest:
-    return AppTest.from_file("app.py").run(timeout=10)
+    """Запустить приложение в режиме GraphRAG-демо (дефолт)."""
+    app = AppTest.from_file("app.py", default_timeout=10)
+    app.session_state["app_mode"] = "GraphRAG-демо"
+    return app.run()
+
+
+def gradio(app: AppTest) -> AppTest:
+    """Radio выбора демо-вопроса (radio[0] — режим, radio[1] — демо-вопрос)."""
+    return app.radio[1]
 
 
 def subheaders(app: AppTest) -> list[str]:
@@ -26,7 +34,7 @@ def test_initial_state_has_no_answer_sections():
 
 def test_radio_fills_question_without_rendering_answer():
     app = run_app()
-    app.radio[0].set_value("Главный ответ").run(timeout=10)
+    gradio(app).set_value("Главный ответ").run(timeout=10)
 
     assert app.text_input[0].value == PREPARED_QUESTIONS["Главный ответ"][0].question
     assert "Ответ" not in subheaders(app)
@@ -34,7 +42,7 @@ def test_radio_fills_question_without_rendering_answer():
 
 def test_search_renders_answer_sections():
     app = run_app()
-    app.radio[0].set_value("Главный ответ").run(timeout=10)
+    gradio(app).set_value("Главный ответ").run(timeout=10)
     app.button[0].click().run(timeout=15)
 
     assert subheaders(app) == ["Ответ", "Таблица фактов", "Источники и цитаты", "Пробелы", "Противоречия", "Карта связей ответа"]
@@ -44,7 +52,7 @@ def test_search_renders_answer_sections():
 
 def test_pill_fills_variant_without_rendering_answer():
     app = run_app()
-    app.radio[0].set_value("Главный ответ").run(timeout=10)
+    gradio(app).set_value("Главный ответ").run(timeout=10)
 
     assert len(app.pills) == 1
     app.pills[0].set_value("Плотность наблюдений").run(timeout=10)
@@ -55,9 +63,9 @@ def test_pill_fills_variant_without_rendering_answer():
 
 def test_switching_category_resets_prior_pill():
     app = run_app()
-    app.radio[0].set_value("Главный ответ").run(timeout=10)
+    gradio(app).set_value("Главный ответ").run(timeout=10)
     app.pills[0].set_value("Плотность наблюдений").run(timeout=10)
-    app.radio[0].set_value("Пробелы").run(timeout=10)
+    gradio(app).set_value("Пробелы").run(timeout=10)
 
     assert app.text_input[0].value == PREPARED_QUESTIONS["Пробелы"][0].question
     assert app.pills[0].value is None
@@ -66,7 +74,7 @@ def test_switching_category_resets_prior_pill():
 
 def test_blank_submit_preserves_previous_answer():
     app = run_app()
-    app.radio[0].set_value("Главный ответ").run(timeout=10)
+    gradio(app).set_value("Главный ответ").run(timeout=10)
     app.button[0].click().run(timeout=15)
     app.text_input[0].set_value("").run(timeout=10)
     app.button[0].click().run(timeout=10)
@@ -115,7 +123,7 @@ def _old_test_llm_toggle_renders_mocked_summary(monkeypatch):
     app = run_app()
     assert app.toggle[0].label == "LLM-резюме (YandexGPT)"
     app.toggle[0].set_value(True).run(timeout=10)
-    app.radio[0].set_value("Р“Р»Р°РІРЅС‹Р№ РѕС‚РІРµС‚").run(timeout=10)
+    gradio(app).set_value("Р“Р»Р°РІРЅС‹Р№ РѕС‚РІРµС‚").run(timeout=10)
     app.button[0].click().run(timeout=15)
 
     assert "LLM-резюме" in subheaders(app)
@@ -134,7 +142,7 @@ def _old_test_llm_failure_keeps_deterministic_answer(monkeypatch):
 
     app = run_app()
     app.toggle[0].set_value(True).run(timeout=10)
-    app.radio[0].set_value("Р“Р»Р°РІРЅС‹Р№ РѕС‚РІРµС‚").run(timeout=10)
+    gradio(app).set_value("Р“Р»Р°РІРЅС‹Р№ РѕС‚РІРµС‚").run(timeout=10)
     app.button[0].click().run(timeout=15)
 
     assert "LLM-резюме" not in subheaders(app)
@@ -158,7 +166,7 @@ def test_llm_toggle_renders_mocked_summary(monkeypatch):
     app = run_app()
     assert app.toggle[0].label.startswith("LLM-")
     app.toggle[0].set_value(True).run(timeout=10)
-    app.radio[0].set_value(app.radio[0].options[0]).run(timeout=10)
+    gradio(app).set_value(gradio(app).options[0]).run(timeout=10)
     app.button[0].click().run(timeout=15)
 
     assert any("LLM" in value for value in subheaders(app))
@@ -177,7 +185,7 @@ def test_llm_failure_keeps_deterministic_answer(monkeypatch):
 
     app = run_app()
     app.toggle[0].set_value(True).run(timeout=10)
-    app.radio[0].set_value(app.radio[0].options[0]).run(timeout=10)
+    gradio(app).set_value(gradio(app).options[0]).run(timeout=10)
     app.button[0].click().run(timeout=15)
 
     assert not any("LLM" in value for value in subheaders(app))

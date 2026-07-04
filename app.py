@@ -7,7 +7,7 @@ import sys
 import time
 from pathlib import Path
 
-from sciknot import llm_summary
+from sciknot import literature_review, llm_summary
 from sciknot.catalog import load_documents
 from sciknot.demo_questions import (
     PREPARED_QUESTIONS,
@@ -287,6 +287,126 @@ def render_answer(st, bundle, trace: dict) -> None:
     st.graphviz_chart(graphviz_from_subgraph(bundle.subgraph), width="stretch")
 
 
+JURY_QUESTIONS = [
+    "Очистка шахтных вод горно-рудных предприятий цветной металлургии",
+    "Циркуляция католита при электроэкстракции никеля",
+    "Электролитическое производство никеля и меди: подача и циркуляция электролита, диафрагменные ячейки",
+    "Источники техногенного гипса и способы его переработки",
+    "Удаление SO2 из отходящих газов металлургических предприятий",
+    "Распределение Au, Ag и МПГ между медным, никелевым штейном и шлаком",
+    "Современные способы переработки свинцово-цинкового сырья",
+    "Подготовка воды (обессоливание) для обогатительных фабрик",
+]
+
+
+def run_review(st, question: str) -> tuple[list, dict, str | None]:
+    """Поиск документов + генерация литобзора. Возвращает (hits, meta, review)."""
+    cache = st.session_state.setdefault("doc_text_cache", {})
+    with st.status("Готовлю литературный обзор...", expanded=True) as status:
+        st.write("Извлекаю ключевые слова из вопроса...")
+        keywords = literature_review.extract_keywords(question)
+        st.write(f"Ключевые слова: {', '.join(keywords[:10])}")
+        st.write("Ищу релевантные документы в корпусе...")
+        hits = literature_review.search_documents(question, top_k=6, text_cache=cache)
+        if not hits:
+            status.update(label="Ничего не найдено", state="error")
+            return [], {}, None
+        st.write(f"Нашёл {len(hits)} документов. Читаю содержимое...")
+        st.write("Генерирую обзор через YandexGPT...")
+        review, meta = literature_review.generate_review(question, hits)
+        if review:
+            st.write(f"Обзор готов за {meta.get('latency_ms', 0)} мс.")
+            status.update(label="Готово", state="complete")
+        else:
+            st.write(f"YandexGPT недоступен ({meta.get('detail')}).")
+            status.update(label="LLM недоступен", state="error")
+        return hits, meta, review
+
+
+def render_review(st, question: str, hits: list, meta: dict, review: str | None) -> None:
+    """Отрисовать результат литобзора."""
+    if review:
+        st.subheader("Литературный обзор")
+        st.markdown(review)
+        st.caption(
+            f"{meta.get('model', 'YandexGPT')} · {meta.get('latency_ms', 0)} мс · "
+            "только из найденных документов, без выдумок"
+        )
+    elif meta.get("status") == "unavailable":
+        st.warning("YandexGPT недоступен — обзор не сгенерирован. Проверьте ключи в .env.")
+
+    st.subheader("Источники")
+    for index, hit in enumerate(hits, start=1):
+        title = Path(hit.get("path", "")).name
+        st.markdown(
+            f"{index}. **[{hit.get('document_id', '')}]** {title} "
+            f"(релевантность: {hit.get('score', 0)}, раздел: {hit.get('source_bucket', '—')})"
+        )
+
+
+def _render_literature_review_mode(st, llm_ready: bool) -> None:
+    """Ветка UI: режим литературного обзора по корпусу документов."""
+    st.caption(
+        "Режим литобзора: по вопросу система находит релевантные документы в корпусе "
+        "и через YandexGPT составляет связный обзор с цитированием источников."
+    )
+
+    if not llm_ready:
+        st.warning(
+            "Для генерации обзора нужен YandexGPT. Задайте YANDEX_API_KEY и YANDEX_FOLDER_ID в .env — "
+            "поиск документов всё равно работает ниже."
+        )
+
+    if "review_question_input" not in st.session_state:
+        st.session_state["review_question_input"] = ""
+    if "review_result" not in st.session_state:
+        st.session_state["review_result"] = None
+
+    def fill_jury_question(question: str) -> None:
+        st.session_state["review_question_input"] = question
+        st.session_state["review_result"] = None
+
+    st.write("**Готовые вопросы (примеры от экспертов):**")
+    jury_cols = st.columns(min(4, len(JURY_QUESTIONS)))
+    for index, question in enumerate(JURY_QUESTIONS):
+        jury_cols[index % len(jury_cols)].button(
+            question[:40] + ("…" if len(question) > 40 else ""),
+            key=f"jury_q_{index}",
+            on_click=fill_jury_question,
+            args=(question,),
+            help=question,
+        )
+
+    with st.form("review_form"):
+        review_question = st.text_input("Вопрос для обзора", key="review_question_input")
+        review_submitted = st.form_submit_button("Составить обзор", type="primary")
+
+    if review_submitted:
+        if not review_question.strip():
+            st.warning("Введите вопрос для обзора.")
+        else:
+            st.session_state["review_result"] = None
+            hits, meta, review = run_review(st, review_question.strip())
+            st.session_state["review_result"] = {
+                "question": review_question.strip(),
+                "hits": hits,
+                "meta": meta,
+                "review": review,
+            }
+
+    result = st.session_state.get("review_result")
+    if result:
+        if not result["hits"]:
+            st.info(
+                "В корпусе не найдено документов по теме. Попробуйте переформулировать вопрос "
+                "или выбрать другой пример."
+            )
+        else:
+            render_review(st, result["question"], result["hits"], result["meta"], result["review"])
+    else:
+        st.info("Выберите готовый вопрос выше или задайте свой.")
+
+
 def main() -> None:
     import streamlit as st
 
@@ -295,6 +415,16 @@ def main() -> None:
     ensure_demo_data()
     rows = fetch_all()
     llm_is_available = llm_summary.llm_available()
+    review_llm_available = literature_review.llm_available()
+
+    st.radio(
+        "Режим",
+        ["GraphRAG-демо", "Литературный обзор"],
+        horizontal=True,
+        key="app_mode",
+        help="GraphRAG-демо — поиск по графу проверенных фактов. Литературный обзор — обзор по корпусу документов через YandexGPT.",
+    )
+    mode = st.session_state.get("app_mode", "GraphRAG-демо")
 
     st.sidebar.header("Архитектура")
     if llm_is_available:
@@ -327,6 +457,11 @@ def main() -> None:
     col2.metric("Фактов в демо-срезе", len(rows))
     col3.metric("Документов-источников", len({row["source_document_id"] for row in rows}))
     col4.metric("Узлов в графе", count_graph_nodes(len({row["material"] for row in rows})))
+
+    if mode == "Литературный обзор":
+        _render_literature_review_mode(st, review_llm_available)
+        return
+
     st.caption("Демо построено на курируемом срезе корпуса; каждый факт проверен вручную и имеет источник.")
 
     if "question_input" not in st.session_state:
