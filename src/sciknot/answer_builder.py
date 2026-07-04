@@ -57,11 +57,11 @@ def signal_text(row: dict[str, Any]) -> str:
 
 def build_answer(question: str, intent: dict[str, Any], rows: list[dict[str, Any]]) -> AnswerBundle:
     if not rows:
-        missing = ["Нет строк таблицы для выбранного объекта/свойства."]
+        missing = ["Нет данных по выбранному объекту и свойству."]
         return AnswerBundle(
             question=question,
             intent=intent,
-            summary="Недостаточно данных: граф не нашел релевантных экспериментов в curated slice.",
+            summary="Недостаточно данных: в графе не нашлось экспериментов по этому вопросу.",
             experiment_rows=[],
             evidence=[],
             gaps=[],
@@ -85,11 +85,11 @@ def build_answer(question: str, intent: dict[str, Any], rows: list[dict[str, Any
         summary = f"По {subject_label(question, intent, rows)} {fact_phrase(len(rows))}: {signals}."
     if len(source_ids) < 3:
         if len(source_ids) == 1:
-            summary += " Вывод основан на единственном источнике — для надежной картины данных недостаточно."
+            summary += " Вывод основан на единственном источнике — для надёжной картины данных не хватает."
         else:
-            summary += " Источников меньше трех — вывод требует дополнительного независимого подтверждения."
+            summary += " Источников меньше трёх — выводу нужно дополнительное независимое подтверждение."
     if any(gap.severity == "high" for gap in gaps):
-        summary += " Есть критические пробелы: нужны прямые замеры или верификация прогноза."
+        summary += " Есть критические пробелы: не хватает прямых замеров или верификации прогноза."
 
     return AnswerBundle(
         question=question,

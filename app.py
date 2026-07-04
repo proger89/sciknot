@@ -124,42 +124,41 @@ def run_search(st, question: str, use_llm: bool = False) -> tuple[object | None,
         trace["pipeline_seconds"] = time.perf_counter() - pipeline_started_at
         time.sleep(0.3)
         if not trace["recognized"]:
-            st.write("Не нашел известных сущностей в демо-графе.")
+            st.write("Не нашёл в графе знакомых терминов из вопроса.")
             time.sleep(0.3)
             trace["display_seconds"] = time.perf_counter() - display_started_at
-            status.update(label=f"Не нашел за {trace['pipeline_seconds'] * 1000:.0f} мс", state="error")
+            status.update(label="Ничего не найдено", state="error")
             return None, trace
 
         entities = ", ".join(trace["entities"])
-        st.write(f"Найдены сущности: {entities}")
+        st.write(f"Узнал в вопросе: {entities}")
         time.sleep(0.3)
-        st.write("Ищу связанные факты в графе...")
+        st.write("Собираю связанные факты...")
         time.sleep(0.3)
         st.write(
-            f"Найдено фактов: {trace['facts_count']}; "
-            f"источников: {trace['sources_count']}. Собираю доказательства..."
+            f"Нашёл {trace['facts_count']} фактов из {trace['sources_count']} источников. "
+            "Готовлю доказательства..."
         )
         time.sleep(0.3)
         if use_llm and bundle is not None:
-            st.write("Генерирую LLM-резюме (YandexGPT) строго по найденным фактам...")
+            st.write("Готовлю краткое резюме через YandexGPT — только по найденным фактам...")
             summary, meta = llm_summary.generate_summary(question, bundle)
             trace["llm_meta"] = meta
             if summary:
                 trace["llm_summary"] = summary
-                st.write("LLM-резюме готово.")
+                st.write("Резюме готово.")
             else:
-                st.write("LLM недоступен, показываю детерминированный вывод.")
+                st.write("YandexGPT недоступен — показываю ответ из графа фактов.")
         trace["display_seconds"] = time.perf_counter() - display_started_at
-        status.update(label=f"Готово: пайплайн {trace['pipeline_seconds'] * 1000:.0f} мс", state="complete")
+        status.update(label="Готово", state="complete")
         return bundle, trace
 
 
 def render_search_meta(st, trace: dict) -> None:
     st.caption(
-        f"Пайплайн {trace.get('pipeline_seconds', 0) * 1000:.0f} мс · "
+        f"Поиск занял {trace.get('pipeline_seconds', 0) * 1000:.0f} мс · "
         f"{noun_count(trace.get('facts_count', 0), 'факт', 'факта', 'фактов')} · "
-        f"{noun_count(trace.get('sources_count', 0), 'источник', 'источника', 'источников')} · "
-        "этапы показаны с паузами для наглядности"
+        f"{noun_count(trace.get('sources_count', 0), 'источник', 'источника', 'источников')}"
     )
 
     llm_meta = trace.get("llm_meta") or {}
@@ -187,9 +186,9 @@ def render_unknown_fallback(st, trace: dict) -> None:
     st.warning("Не удалось сопоставить вопрос с известными сущностями графа.")
     entities = trace.get("known_entities", [])
     if not entities:
-        st.warning("Список известных сущностей пуст. Проверьте curated dictionaries.")
+        st.warning("В графе пока нет известных терминов для подсказки.")
         return
-    st.write("В демо-срезе есть:")
+    st.write("В демо-графе есть:")
     cols = st.columns(min(5, len(entities)))
     for index, entity in enumerate(entities):
         cols[index % len(cols)].button(
@@ -198,7 +197,7 @@ def render_unknown_fallback(st, trace: dict) -> None:
             on_click=fill_question_from_entity,
             args=(entity,),
         )
-    st.caption("Клик по сущности подставит вопрос в поле выше; затем нажмите `Найти ответ`.")
+    st.caption("Нажмите на термин — он подставится в поле вопроса выше. Потом нажмите «Найти ответ».")
 
 
 def render_answer(st, bundle, trace: dict) -> None:
@@ -210,7 +209,7 @@ def render_answer(st, bundle, trace: dict) -> None:
         st.success(trace["llm_summary"])
         st.caption(
             f"{llm_meta.get('model', 'YandexGPT')} · {llm_meta.get('latency_ms', 0)} мс · "
-            "\u0441\u0433\u0435\u043d\u0435\u0440\u0438\u0440\u043e\u0432\u0430\u043d\u043e \u0442\u043e\u043b\u044c\u043a\u043e \u0438\u0437 \u043d\u0430\u0439\u0434\u0435\u043d\u043d\u044b\u0445 \u0442\u0430\u0431\u043b\u0438\u0447\u043d\u044b\u0445 \u0444\u0430\u043a\u0442\u043e\u0432"
+            "только из найденных фактов, без выдумок"
         )
     st.subheader("Ответ")
     st.write(bundle.summary)
@@ -220,7 +219,7 @@ def render_answer(st, bundle, trace: dict) -> None:
         "(не означает научную достоверность вывода)"
     )
     if bundle.data_insufficient:
-        st.warning("Данных недостаточно для части вывода. Ниже перечислены пробелы.")
+        st.warning("По части вывода данных не хватает — пробелы перечислены ниже.")
 
     st.subheader("Таблица фактов")
     st.dataframe(
@@ -256,7 +255,7 @@ def render_answer(st, bundle, trace: dict) -> None:
             f"— {title} ({claim.source.document_id}), {claim.source.locator} · уверенность {claim.confidence:.2f}"
         )
     if not bundle.evidence:
-        st.info("Evidence layer пока не построен; ответ опирается на табличную provenance.")
+        st.info("Подробные цитаты из первоисточников появятся позже; пока ответ опирается на таблицы с указанием источников.")
 
     st.subheader("Пробелы")
     if bundle.gaps:
@@ -265,6 +264,18 @@ def render_answer(st, bundle, trace: dict) -> None:
             st.markdown(f"- **{label}:** {gap.reason}")
     else:
         st.success("Критические пробелы для выбранного ответа не обнаружены.")
+
+    st.subheader("Противоречия")
+    source_backed = [c for c in bundle.contradictions if c.status == "source_backed"]
+    if source_backed:
+        for c in source_backed:
+            docs = ", ".join(c.source_document_ids) if c.source_document_ids else "—"
+            st.markdown(
+                f"- **{c.entity} · {c.property_name}:** {c.claim_a} ↔ {c.claim_b} "
+                f"(источники: {docs})"
+            )
+    else:
+        st.success("Противоречий между источниками по этому ответу не найдено.")
 
     st.subheader("Карта связей ответа")
     node_count = len(bundle.subgraph["nodes"])
@@ -288,21 +299,21 @@ def main() -> None:
     st.sidebar.header("Архитектура")
     if llm_is_available:
         st.sidebar.info(
-            "Факты ищутся детерминированно: вопрос -> сущности -> SQLite-граф -> доказательства. "
-            "YandexGPT можно включить ниже только для краткого резюме найденных фактов."
+            "Поиск идёт по графу проверенных фактов: от вопроса — к нужным сущностям, "
+            "экспериментам и источникам. YandexGPT ниже — необязательное краткое резюме уже найденного."
         )
     else:
         st.sidebar.info(
-            "Демо работает без LLM: вопрос обрабатывается детерминированным GraphRAG-поиском "
-            "по SQLite-графу. LLM-слой заменяемый и подготовлен для YandexGPT через config/models.yml."
+            "Демо работает без нейросети: поиск идёт по графу проверенных фактов. "
+            "При желании можно подключить YandexGPT — для краткого резюме ответа."
         )
-    st.sidebar.caption("Предвычислен только индекс; разбор вопроса, линковка, запрос к графу и сборка ответа идут при клике.")
+    st.sidebar.caption("Граф и факты подготовлены заранее — сам ответ собирается по запросу, в реальном времени.")
 
     if llm_is_available:
         st.sidebar.toggle("LLM-резюме (YandexGPT)", key="use_llm", value=False)
         st.sidebar.caption(
-            "\u0420\u0435\u0437\u044e\u043c\u0435 \u0433\u0435\u043d\u0435\u0440\u0438\u0440\u0443\u0435\u0442\u0441\u044f \u0441\u0442\u0440\u043e\u0433\u043e \u043f\u043e \u043d\u0430\u0439\u0434\u0435\u043d\u043d\u044b\u043c \u0444\u0430\u043a\u0442\u0430\u043c; "
-            "\u043f\u0440\u0438 \u043d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u043d\u043e\u0441\u0442\u0438 API \u0434\u0435\u043c\u043e \u043f\u0440\u043e\u0434\u043e\u043b\u0436\u0430\u0435\u0442 \u0440\u0430\u0431\u043e\u0442\u0430\u0442\u044c \u0431\u0435\u0437 LLM."
+            "Резюме строится только из найденных фактов — ничего выдуманного. "
+            "Если YandexGPT недоступен, ответ всё равно появится."
         )
 
     st.title("SciKnot Navigator")
@@ -358,11 +369,11 @@ def main() -> None:
             key="example_pill",
             on_change=choose_example_pill,
         )
-        st.caption("Radio выбирает категорию; pills ниже подставляют один из проверенных вопросов этой категории.")
+        st.caption("Слева — категория, справа — конкретный вопрос. Выбор подставляет готовый вопрос в поле ниже.")
 
     with st.form("search"):
         question = st.text_input("Вопрос", key="question_input")
-        st.caption("Кнопка отвечает на текущий текст вопроса. Примеры выше только подставляют текст.")
+        st.caption("Кнопка отвечает на текст в поле. Примеры выше просто подставляют вопрос.")
         submitted = st.form_submit_button("Найти ответ", type="primary")
 
     if submitted:

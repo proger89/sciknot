@@ -17,7 +17,7 @@ def detect_gaps(rows: list[dict[str, Any]]) -> list[Gap]:
                     material=row["material"],
                     process=row["process"],
                     property_name=row["property_name"],
-                    reason="В таблице есть источник и объект, но фактический измеренный результат отсутствует.",
+                    reason="Есть объект и источник, но самого результата измерения нет.",
                     severity="high",
                     source_document_ids=[row["source_document_id"]],
                 )
@@ -30,7 +30,7 @@ def detect_gaps(rows: list[dict[str, Any]]) -> list[Gap]:
                     material=row["material"],
                     process=row["process"],
                     property_name=row["property_name"],
-                    reason="Вывод основан на слабом или единичном свидетельстве, нужен контрольный источник.",
+                    reason="Вывод опирается на слабое или единственное свидетельство — нужен контрольный источник.",
                     severity="medium",
                     source_document_ids=[row["source_document_id"]],
                 )
@@ -38,13 +38,13 @@ def detect_gaps(rows: list[dict[str, Any]]) -> list[Gap]:
     if rows and len(source_ids) < 3:
         if len(source_ids) == 1:
             reason = (
-                f"Вывод основан на единственном источнике ({source_ids[0]}); "
-                "требуется независимое подтверждение."
+                f"Вывод опирается на единственный источник ({source_ids[0]}) — "
+                "нужно независимое подтверждение."
             )
         else:
             reason = (
-                f"Вывод основан только на {len(source_ids)} источниках "
-                f"({', '.join(source_ids)}); для надежной картины нужен третий независимый источник."
+                f"Вывод опирается всего на {len(source_ids)} источника "
+                f"({', '.join(source_ids)}) — для надёжной картины нужен третий, независимый."
             )
         gaps.append(
             Gap(
